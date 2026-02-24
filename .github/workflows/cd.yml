@@ -25,6 +25,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./flask-todo-crud-docker/
+          file: ./flask-todo-crud-docker/Dockerfile
           push: true
           tags: nv23077/cc302-todo-app:latest
