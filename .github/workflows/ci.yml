@@ -27,4 +27,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: YOUR_DOCKER_USERNAME/cc302-todo-app:latest
+          tags: nv23077/cc302-todo-app:latest
