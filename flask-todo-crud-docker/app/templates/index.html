@@ -59,18 +59,68 @@
 
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h3>📝 Todo App</h3>
-            <button class="btn btn-sm btn-outline-secondary" onclick="toggleDarkMode()">🌙</button>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-secondary" onclick="toggleDarkMode()">🌙</button>
+                <button class="btn btn-sm btn-outline-primary" onclick="toggleViewMode()">📋</button>
+            </div>
         </div>
+
+        <!-- Search Bar -->
+        <form method="GET" class="mb-3">
+            <div class="input-group">
+                <input type="text" name="q" class="form-control" placeholder="Search tasks..." value="{{ q }}">
+                <button class="btn btn-outline-secondary" type="submit">🔍</button>
+            </div>
+        </form>
+
+        <!-- Filters and Sorting -->
+        <form method="GET" class="row g-2 mb-4">
+            <div class="col-md-3">
+                <select name="status" class="form-select">
+                    <option value="">All Status</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="priority" class="form-select">
+                    <option value="">All Priority</option>
+                    <option value="high" {% if priority_filter == 'high' %}selected{% endif %}>High</option>
+                    <option value="medium" {% if priority_filter == 'medium' %}selected{% endif %}>Medium</option>
+                    <option value="low" {% if priority_filter == 'low' %}selected{% endif %}>Low</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="sort" class="form-select">
+                    <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Created Date</option>
+                    <option value="due_date" {% if sort_by == 'due_date' %}selected{% endif %}>Due Date</option>
+                    <option value="priority" {% if sort_by == 'priority' %}selected{% endif %}>Priority</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-secondary w-100" type="submit">Filter & Sort</button>
+            </div>
+        </form>
 
         <!-- Add Todo -->
         <form method="POST" class="row g-2 mb-4">
-            <div class="col-7">
+            <div class="col-md-3">
                 <input type="text" name="task" class="form-control" placeholder="Task" required>
             </div>
-            <div class="col-3">
+            <div class="col-md-3">
+                <textarea name="description" class="form-control" placeholder="Description" rows="1"></textarea>
+            </div>
+            <div class="col-md-2">
+                <select name="priority" class="form-select">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                </select>
+            </div>
+            <div class="col-md-2">
                 <input type="date" name="due_date" class="form-control">
             </div>
-            <div class="col-2">
+            <div class="col-md-2">
                 <button class="btn btn-primary w-100">Add</button>
             </div>
         </form>
@@ -78,41 +128,85 @@
         <!-- Todo List -->
         <ul class="list-group list-group-flush">
             {% for todo in todos %}
-                <li class="list-group-item d-flex align-items-center gap-2">
+                <li class="list-group-item d-flex align-items-start gap-2 {% if todo.status == 'completed' %}completed{% endif %}">
 
                     <!-- Complete Checkbox -->
-                    <a href="{{ url_for('main.toggle', index=loop.index0) }}">
-                        <input type="checkbox" {% if todo.completed %}checked{% endif %} onclick="return false;">
+                    <a href="{{ url_for('main.toggle', id=todo.id) }}" class="mt-1">
+                        <input type="checkbox" {% if todo.status == 'completed' %}checked{% endif %} onclick="return false;">
                     </a>
 
-                    <!-- Editable Task -->
-                    <form
-                        method="POST"
-                        action="{{ url_for('main.edit', index=loop.index0) }}"
-                        class="flex-grow-1"
-                    >
-                        <input
-                            type="text"
-                            name="task"
-                            value="{{ todo.task }}"
-                            class="todo-input {% if todo.completed %}completed{% endif %}"
-                            onkeydown="submitOnEnter(event, this.form)"
+                    <!-- Task Content -->
+                    <div class="flex-grow-1">
+                        <!-- Editable Task -->
+                        <form
+                            method="POST"
+                            action="{{ url_for('main.edit', id=todo.id) }}"
+                            class="mb-2"
                         >
-                    </form>
+                            <div class="row g-2">
+                                <div class="col-md-3">
+                                    <input
+                                        type="text"
+                                        name="task"
+                                        value="{{ todo.task }}"
+                                        class="form-control form-control-sm"
+                                        required
+                                    >
+                                </div>
+                                <div class="col-md-3">
+                                    <textarea
+                                        name="description"
+                                        class="form-control form-control-sm"
+                                        rows="1"
+                                        placeholder="Description"
+                                    >{{ todo.description or '' }}</textarea>
+                                </div>
+                                <div class="col-md-2">
+                                    <select name="priority" class="form-select form-select-sm">
+                                        <option value="low" {% if todo.priority == 'low' %}selected{% endif %}>Low</option>
+                                        <option value="medium" {% if todo.priority == 'medium' %}selected{% endif %}>Medium</option>
+                                        <option value="high" {% if todo.priority == 'high' %}selected{% endif %}>High</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <input
+                                        type="date"
+                                        name="due_date"
+                                        value="{{ todo.due_date.isoformat() if todo.due_date else '' }}"
+                                        class="form-control form-control-sm"
+                                    >
+                                </div>
+                                <div class="col-md-2">
+                                    <button class="btn btn-sm btn-outline-primary" type="submit">Update</button>
+                                </div>
+                            </div>
+                        </form>
 
-                    <!-- Due Date -->
-                    {% if todo.due_date %}
-                        <span class="
-                            {% if todo.due_date < today and not todo.completed %}
-                                overdue
+                        <!-- Metadata -->
+                        <div class="small text-muted">
+                            <span class="badge bg-{% if todo.priority == 'high' %}danger{% elif todo.priority == 'medium' %}warning{% else %}secondary{% endif %}">{{ todo.priority }}</span>
+                            {% if todo.due_date %}
+                                <span class="
+                                    {% if todo.due_date < today and todo.status != 'completed' %}
+                                        text-danger
+                                    {% endif %}
+                                ">
+                                    📅 {{ todo.due_date }}
+                                </span>
                             {% endif %}
-                        ">
-                            📅 {{ todo.due_date }}
-                        </span>
-                    {% endif %}
+                            <span>Created: {{ todo.created_at.strftime('%Y-%m-%d') }}</span>
+                            {% if todo.updated_at != todo.created_at %}
+                                <span>Updated: {{ todo.updated_at.strftime('%Y-%m-%d') }}</span>
+                            {% endif %}
+                        </div>
+
+                        {% if todo.description %}
+                            <div class="mt-1">{{ todo.description }}</div>
+                        {% endif %}
+                    </div>
 
                     <!-- Delete -->
-                    <a href="{{ url_for('main.delete', index=loop.index0) }}" class="text-danger">
+                    <a href="{{ url_for('main.delete', id=todo.id) }}" class="text-danger">
                         ❌
                     </a>
 
